@@ -1,0 +1,639 @@
+---
+title: "Bipasha"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+
+
+```{r}
+library(reticulate)
+library(caret)
+library(tidyverse)
+library(ggplot2)
+library(lattice)
+library(ROCR)
+library(pROC)
+library(e1071)
+library("mlbench")
+
+```
+
+
+
+
+#Pre_processing Train Data
+
+```{r}
+url.train <- "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data" 
+url.test <- "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test" 
+download.file(url.train, destfile = "adult_train.csv") 
+download.file(url.test, destfile = "adult_test.csv")
+
+```
+
+
+```{r}
+train <- read.csv("adult_train.csv", header = FALSE,encoding = "latin1") 
+all_content <- readLines("adult_test.csv") 
+skip_first <- all_content[-1] 
+test <- read.csv(textConnection(skip_first), header = FALSE) 
+
+```
+
+```{r}
+print(test)
+#test <- read.csv("adult_test.csv", header = FALSE,encoding = "latin1") 
+```
+
+
+
+```{r}
+Names <- c("Age", "Workclass", "fnlwgt", "Education", "EducationNum", "MaritalStatus", "occupation", "Relationship","Race", "Sex", "Capital_gain", "Capital_loss", "hours_per_week", "Native_country", "Income_level")
+NROW(train)
+
+trainFileName = "adult.data"; testFileName = "adult.test"
+if (!file.exists (trainFileName)) download.file (url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data", destfile = trainFileName)
+if (!file.exists (testFileName)) download.file (url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test", destfile = testFileName)
+```
+
+```{r}
+train = read.table (trainFileName, header = FALSE, sep = ",", strip.white = TRUE, col.names =Names, na.strings = "?", stringsAsFactors = TRUE) 
+table (complete.cases (train))
+```
+
+```{r}
+NROW(train)
+myCleanTrain = train [!is.na (train$Workclass) & !is.na(train$occupation), ] 
+myCleanTrain = myCleanTrain [!is.na (myCleanTrain$Native_country), ] 
+myCleanTrain$fnlwgt = NULL
+```
+
+```{r}
+NROW(myCleanTrain)
+head(myCleanTrain)
+```
+
+```{r}
+df1<-myCleanTrain
+#View(df1)
+```
+
+
+```{r}
+Xtrain<- select(df1,-c("Income_level"))
+
+```
+
+```{r}
+head(Xtrain)
+```
+
+
+
+```{r}
+keeps <- c("Income_level")
+ytrain= df1[keeps]
+
+```
+
+```{r}
+daf<-data.frame(df1)
+```
+
+```{r}
+print(ytrain[1,])
+```
+
+```{r}
+levels(ytrain$Income_level) <- c(1,0)
+```
+
+
+
+#Standardize  Data
+
+```{r}
+ X_train[]<- lapply(Xtrain, function(x) if(is.numeric(x)){
+                     scale(x, center=TRUE, scale=TRUE)
+                      } else x)
+
+```
+
+```{r}
+print(X_train)
+```
+
+```{r}
+#normalize <- function(x) {
+#return ((x - min(x)) / (max(x) - min(x)))
+#}
+```
+
+
+
+```{r}
+nrow(X_train)
+nrow(y_train)
+```
+
+
+```{r}
+use_python("C:/Program Files/Python37/python.exe")
+```
+
+```{r}
+library(keras)
+#install_keras()
+
+library(tensorflow)
+```
+#3 layer model without dropout
+
+```{r}
+model1 <- keras_model_sequential() 
+model1 %>% 
+layer_dense(units = 5, input_shape = 96, activation ='relu')%>%
+layer_dense(units = 1, activation = 'sigmoid') 
+```
+
+
+```{r}
+summary(model1)
+```
+
+#3 Layer Model with dropout
+```{r}
+model2 <- keras_model_sequential() 
+model2 %>% 
+#layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 5, input_shape = 96, activation ='relu')%>%
+layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 1, activation = 'sigmoid') 
+```
+
+```{r}
+summary(model2)
+```
+
+#Model with four layer without drop_out
+
+```{r}
+model3 <- keras_model_sequential() 
+model3 %>% 
+layer_dense(units = 10, input_shape = 96, activation ='relu')%>%
+layer_dense(units = 5, activation = 'relu') %>%
+#layer_dropout(rate = 0.5) %>% 
+layer_dense(units = 1, activation = 'sigmoid')
+```
+
+
+```{r}
+summary(model3)
+```
+
+#Model with 4 layer with dropout
+
+```{r}
+model4 <- keras_model_sequential() 
+model4 %>% 
+layer_dense(units = 10, input_shape = 96, activation ='relu')%>%
+layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 5, activation = 'relu') %>%
+#layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 1, activation = 'sigmoid')
+```
+
+```{r}
+summary(model4)
+```
+
+#Final model with own choice
+
+```{r}
+model5 <- keras_model_sequential() 
+model5 %>% 
+layer_dense(units = 10, input_shape = 96, activation ='relu')%>%
+#layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 10, activation = 'relu') %>%
+#layer_dropout(rate = 0.2) %>% 
+layer_dense(units = 5, activation = 'relu') %>%
+#layer_dropout(rate = 0.5) %>% 
+layer_dense(units = 1, activation = 'sigmoid')
+```
+
+
+
+```{r}
+summary(model5)
+```
+```{r}
+#X_train_new[] <-dummyVars(~.,data=X_train,levelsOnly=TRUE)
+#head(predict(X_train_new,X_train))
+#X_train_new <-dummyVars(~.,data=X_train,levelsOnly=TRUE)
+#head(predict(X_train_new,X_train))
+dmy <- dummyVars(~., data=X_train, fullRank=TRUE)
+X_train_new <- data.frame(predict(dmy, newdata=X_train))
+X_train_new1<-as.matrix(X_train_new)
+```
+
+```{r}
+View(X_train_new)
+typeof(X_train_new1)
+```
+
+
+```{r}
+#y_train<-as.data.frame(y_train)
+
+y_train_new1<-as.matrix(y_train)
+
+```
+
+```{r}
+#final variable
+y_train_new1<-as.numeric(y_train_new1)
+typeof(y_train_new1)
+```
+
+```{r}
+#nrow(X_train_new1)
+ncol(X_train_new1)
+```
+
+
+#Activity 5(d)
+#Plotting the training and the validation accuracy 
+
+```{r}
+model1 %>% compile ( loss = 'binary_crossentropy', metrics = 'accuracy', optimizer = optimizer_sgd(lr = 0.01))
+```
+
+
+```{r}
+history1<-model1 %>% 
+  fit( X_train_new1, y_train_new1, epochs = 10, batch_size = 32, validation_split = 0.2 )
+```
+
+
+#Model1
+
+
+```{r}
+plot(history1$metrics$acc, main="Accuracy for Model_1", xlab = "epoch", ylab="Accuracy", col="blue", type="l")
+lines(history1$metrics$val_acc, col="green")
+
+```
+
+#model 2
+
+```{r}
+model2 %>% compile ( loss = 'binary_crossentropy', metrics = 'accuracy', optimizer = optimizer_sgd(lr = 0.01))
+```
+
+
+```{r}
+history2<-model2 %>% 
+  fit( X_train_new1, y_train_new1, epochs = 10, batch_size = 32, validation_split = 0.2 )
+```
+
+# Plotting of training and validation accuracy
+
+```{r}
+plot(history2$metrics$accuracy, main="Accuracy for Model_2", xlab = "epoch", ylab="Accuracy", col="blue", type="l")
+lines(history2$metrics$val_accuracy, col="green")
+legend("bottomright", c("train","test"), col=c("blue", "green"), lty=c(1,1))
+
+```
+
+
+#Model 3
+
+```{r}
+model3 %>% compile ( loss = 'binary_crossentropy', metrics = 'accuracy', optimizer = optimizer_sgd(lr = 0.01))
+```
+
+```{r}
+history3<-model3 %>% 
+  fit( X_train_new1, y_train_new1, epochs = 10, batch_size = 32, validation_split = 0.2)
+
+```
+```{r}
+plot.new()
+
+plot(history3,
+  metrics = c('accuracy'), 
+  method = c("auto", "ggplot2", "base"),smooth = getOption("keras.plot.history.smooth", TRUE)
+)
+title(main="Model_3 Plot",cex.main = .8,   font.main= 1
+)
+```
+
+
+```{r}
+plot(history3$metrics$acc, main="Accuracy for Model_3", xlab = "epoch", ylab="Accuracy", col="blue", type="l")
+lines(history3$metrics$val_acc, col="green")
+legend("bottomright", c("train","test"), col=c("blue", "green"), lty=c(1,1))
+```
+
+
+
+#Model 4
+
+```{r}
+model4 %>% compile ( loss = 'binary_crossentropy', metrics = 'accuracy', optimizer = optimizer_sgd(lr = 0.01))
+
+```
+
+
+
+```{r}
+history4<-model4 %>% 
+  fit( X_train_new1, y_train_new1, epochs = 10, batch_size = 32, validation_split = 0.2 )
+```
+
+
+```{r}
+
+plot(history4$metrics$acc, main="Accuracy for Model_4", xlab = "epoch", ylab="Accuracy", col="blue", type="l")
+lines(history4$metrics$val_acc, col="green")
+legend("bottomright", c("train","test"), col=c("blue", "green"), lty=c(1,1))
+```
+
+```{r}
+plot.new()
+
+plot(history4,
+  metrics = c('accuracy'), 
+  method = c("auto", "ggplot2", "base"),smooth = getOption("keras.plot.history.smooth", TRUE)
+)
+title(main="Model_4 Plot",cex.main = .8,   font.main= 1
+)
+```
+
+#Model 5
+ 
+```{r}
+model5 %>% compile ( loss = 'binary_crossentropy', metrics = 'accuracy', optimizer = optimizer_sgd(lr = 0.01))
+```
+
+```{r}
+history5<-model5 %>% 
+  fit( X_train_new1, y_train_new1, epochs = 10, batch_size = 32, validation_split = 0.2 )
+```
+
+
+```{r}
+plot.new()
+
+plot(history5,
+  metrics = c('accuracy'), 
+  method = c("auto", "ggplot2", "base"),smooth = getOption("keras.plot.history.smooth", TRUE)
+)
+title(main="Model_5 Plot",cex.main = .8,   font.main= 1
+)
+```
+```{r}
+plot(history5$metrics$acc, main="Accuracy for Model_3", xlab = "epoch", ylab="Accuracy", col="blue", type="l")
+lines(history5$metrics$val_acc, col="green")
+legend("bottomright", c("train","test"), col=c("blue", "green"), lty=c(1,1))
+```
+
+Highest Accuracy for model 1 (without droop_out)=84.67%
+Highest Accuracy for model 2(with drop_out) =84.19%
+Highest Accuracy for model 3(without drop_out) =85.12%
+Highest Accuracy for model 4 =82.4%(.5) and 84.49% using drop_out(.2) just after the input layer.
+Highest Accuracy for model 5 =84.4%(with drop_out) 84.80%(without dropout)
+
+
+#Activity--5(e)
+From the plot above,we can see that dropout layer doesn't improve the accuracyfor both cases.Dropout is used to prevent overfitting.For the model 3, may be the capacity is already low so thats why by using drop out is hurting the performance of the network.Moreover,using lower rate(less than .25) improves the performance of the model. This model was trained using .5 and the accuracy was lower.A large network with more training and the use of a weight constraint might improve the accuracy while using dropout.
+
+Increasing the number of layers improves the accuracy.Single layer Neural Networks can only learn solutions to problems that are linearly separable. So having more layers can generlise the data.
+
+Model3 is the best architecture.we used four layers and got the highest performance.
+
+
+#Activity-----5(f)
+
+From above 5 Architectures, we will test the model using model which is a four layer Model.
+
+#Preparing the test file
+
+```{r}
+test <- read.csv("adult_test.csv", header = FALSE,encoding = "latin1") 
+print(test)
+```
+```{r}
+names(test) <- c("Age", "Workclass", "fnlwgt", "Education", "EducationNum", "MaritalStatus", "occupation", "Relationship","Race", "Sex", "Capital_gain", "Capital_loss", "hours_per_week", "Native_country", "Income_level")
+```
+
+```{r}
+print(test)
+```
+
+
+```{r}
+#Names <- c("Age", "Workclass", "fnlwgt", "Education", "EducationNum", "MaritalStatus", "occupation", "Relationship","Race", "Sex", "Capital_gain", "Capital_loss", "hours_per_week", "Native_country", "Income_level")
+#NROW(train)
+
+testFileName = "adult.test"
+if (!file.exists (testFileName)) download.file (url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test", destfile = testFileName)
+NROW(test)
+ncol(test)
+```
+
+```{r}
+test = read.csv(testFileName, header = FALSE, sep = ",", strip.white = TRUE, col.names =Names, na.strings = "?", stringsAsFactors = TRUE) 
+table (complete.cases (test))
+```
+```{r}
+nrow(test)
+#head(test)
+```
+
+
+#removing the first row as there were 15 missing elements and was showing error
+```{r}
+
+#test <- test[-c(1),] 
+test<-test[-c(1),]
+```
+
+
+```{r}
+head(test)
+```
+
+
+```{r}
+nrow(test)
+```
+
+```{r}
+#test = test [!is.na (test$Workclass) & !is.na(test$occupation), ] 
+#test = test [!is.na (test$Native_country) & !is.na(test$Income_level), ] 
+#test$fnlwgt = NULL
+#test<- select(test,-c(fnlwgt))
+nrow(test)
+```
+
+
+```{r}
+
+ncol(test)
+```
+
+
+```{r}
+test <- test [!is.na (test$Workclass) & !is.na(test$occupation), ] 
+test<- test [!is.na (test$Native_country), ] 
+test$fnlwgt <- NULL 
+nrow(test)
+```
+
+
+```{r}
+library(plyr) 
+test$Income_level <- revalue(test$Income_level, c("<=50K."= 1))
+test$Income_level <- revalue(test$Income_level, c(">50K."= 0))
+test$Workclass <- revalue(test$Workclass, c("Federal-gov" = "State-gov"))
+test$Education <- revalue(test$Education, c("10th" = "11th"))
+test$MaritalStatus <- revalue(test$MaritalStatus, c("Divorced" = "Separated"))
+test$occupation <- revalue(test$occupation, c("Adm-clerical" = "Armed-Forces"))
+test$Relationship <- revalue(test$Relationship, c("Husband" = "Wife"))
+test$Race <- revalue(test$Race, c("Amer-Indian-Eskimo" = "Black"))
+test$Sex <- revalue(test$Sex, c("Male" = "Female"))
+```
+
+
+```{r}
+ncol(test)
+```
+
+#preparing X_test and y_test
+
+```{r}
+X_test<- select(test,-c("Income_level"))
+```
+
+```{r}
+ncol(X_test)
+print(X_test)
+```
+
+
+```{r}
+keeps <- c("Income_level")
+y_test= test[keeps]
+head(y_test)
+```
+
+
+```{r}
+typeof(y_test)
+```
+
+```{r}
+#nrow(X_test)
+#nrow(y_test)
+#library(plyr)
+#y_test$Income_level <- revalue(y_test$Income_level, c("<=50K."=1))
+#y_test$Income_level<- revalue(y_test$Income_level, c(">50K."=0))
+#print(y_test)
+
+```
+
+
+```{r}
+head(y_test)
+```
+
+```{r}
+unique(X_test$Relationship, incomparables = FALSE)
+#print(X_test[1,])
+```
+```{r}
+unique(X_train$Workclass, incomparables = FALSE)
+```
+
+
+```{r}
+X_test$Age <- as.numeric(X_test$Age)
+
+X_test[]<- lapply(X_test, function(x) if(is.numeric(x)){
+                     scale(x, center=TRUE, scale=TRUE)
+                     } else x)
+```
+
+
+```{r}
+dmy_test <- dummyVars(~., data=X_test, fullRank=TRUE)
+X_test <- data.frame(predict(dmy_test, newdata=X_test))
+X_test<-as.matrix(X_test)
+```
+
+
+
+
+```{r}
+#X_test_new<-as.matrix(y_test)
+y_test<-as.matrix(y_test)
+
+```
+
+
+```{r}
+ncol(X_test)
+#head(X_test_new1)
+```
+
+
+
+```{r}
+#sum(is.na (y_test$Income_level)) 
+```
+
+
+
+```{r}
+#count3 <- length(which(y_test$Income_level == '<=50K.'))
+#print(count3)
+```
+
+```{r}
+nrow(X_test)
+nrow(y_test)
+```
+
+```{r}
+y_test<-as.numeric(y_test)
+
+typeof(y_test)
+```
+
+
+```{r}
+
+model5 %>% evaluate(X_test, y_test, verbose=0)
+
+
+```
+From HW2, for Decision Tree train_accuracy=86.9%
+and test_accuracy was 87.5%.
+Where as for Neural Network, train_accuracy= 85.12% and test_accuracy=80.6%.
+
+The performance of Decisn trees are better than Neural Network. Decisn Trees outperforms Neural Network when the data are semi-structured/unstructured. Here the dataset is semi_structued. That might be the cause of performing better than Neural Network. 

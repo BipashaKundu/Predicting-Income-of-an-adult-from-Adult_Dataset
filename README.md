@@ -1,4 +1,4 @@
-# Predicting-Income-of-an-adult-from-Adult_Dataset
+# Predicting-Income-of-an-adult-from-Adult_Dataset using Rstudio
 Dataset_url: https://archive.ics.uci.edu/ml/machine-learning-databases/adult/
 
 
